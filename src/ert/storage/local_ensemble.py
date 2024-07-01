@@ -187,7 +187,7 @@ class RealizationState:
         with open(path, "w+") as f:
             print("Dumped new state to json")
             # print(self._states)
-            traceback.print_stack(limit=10)
+            traceback.print_stack(limit=None)
             json.dump(self._to_json(), f)
 
     def add(self, realization: int, entries: Set[Tuple[str, str, bool]]) -> None:
@@ -283,13 +283,21 @@ class LocalEnsemble(BaseMode):
         print(self._path)
 
         self._realization_states: Optional[RealizationState] = None
-        _has_state_map = os.path.exists(self._path / "state_map.json")
+        print("self._realization_states: Optional[RealizationState] = None")
+        self.try_read_state_map_from_file()
+        self._response_states_need_update = False
+        self._parameter_states_need_update = False
 
-        print(f"has_state_map? {_has_state_map}")
-        self._response_states_need_update = not _has_state_map
-        self._parameter_states_need_update = not _has_state_map
-        self._refresh_responses_state_if_needed()
-        self._refresh_parameters_state_if_needed()
+    def try_read_state_map_from_file(self):
+        print("try_read_state_map_from_file(self):")
+        print(f"self._realization_states: {self._realization_states}")
+        if self._realization_states is None:
+            print(f"Has file? {os.path.exists(self._path / 'state_map.json')}")
+            self._realization_states = (
+                RealizationState.from_file(self._path / "state_map.json")
+                if os.path.exists(self._path / "state_map.json")
+                else None
+            )
 
     @classmethod
     def create(
@@ -537,6 +545,7 @@ class LocalEnsemble(BaseMode):
     def _refresh_responses_state_if_needed(self) -> None:
         self._ensure_realization_state_initialized()
         if self._response_states_need_update:
+            print(f"id={self._index.id}, _refresh_responses_state_if_needed")
             self._response_states_need_update = False
             self._refresh_all_responses_state_for_all_realizations()
             assert self._realization_states is not None
@@ -547,6 +556,7 @@ class LocalEnsemble(BaseMode):
         self._ensure_realization_state_initialized()
 
         if self._parameter_states_need_update:
+            print(f"id={self._index.id}, _refresh_parameters_state_if_needed")
             self._parameter_states_need_update = False
             self._refresh_all_parameters_state_for_all_realizations()
             assert self._realization_states is not None
@@ -1232,6 +1242,8 @@ class LocalEnsemble(BaseMode):
 
         print("self._parameter_states_need_update = True")
         self._parameter_states_need_update = True
+        if self._realization_states is not None:
+            self._realization_states.clear_entry(realization, group)
 
     @require_write
     def save_response(self, group: str, data: xr.Dataset, realization: int) -> None:

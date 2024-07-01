@@ -130,6 +130,13 @@ class LocalStorage(BaseMode):
         self._ensembles = self._load_ensembles()
         self._experiments = self._load_experiments()
 
+        # Will enforce pulling state from stored data
+        # into statemap
+        # Can be removed if we know 100% that
+        # no storages will ever have datasets in storage, but have no state map file
+        for ens in self._ensembles.values():
+            ens.try_read_state_map_from_file()
+
     def get_experiment(self, uuid: UUID) -> LocalExperiment:
         """
         Retrieves an experiment by UUID.
@@ -210,6 +217,7 @@ class LocalStorage(BaseMode):
                 ensemble = LocalEnsemble(self, ensemble_path, self.mode)
                 ensembles.append(ensemble)
             except FileNotFoundError:
+                print(f"Failed to load ensemble from path {ensemble}")
                 logger.exception(
                     "Failed to load an ensemble from path: %s", ensemble_path
                 )
