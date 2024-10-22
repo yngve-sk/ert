@@ -335,6 +335,43 @@ class LocalExperiment(BaseMode):
         mapping = {}
         for config in self.response_configuration.values():
             for key in config.keys:
+                if key == "*":
+                    continue
+
                 mapping[key] = config.response_type
 
         return mapping
+
+    def update_response_keys(
+        self, response_type: str, new_response_keys: List[str]
+    ) -> None:
+        if not any(
+            k for k in new_response_keys if k not in self.response_key_to_response_type
+        ):
+            return None
+
+        responses_configuration = self.response_configuration
+        if response_type not in responses_configuration:
+            raise KeyError(
+                f"Response type {response_type} does not exist in current responses.json"
+            )
+
+        config = responses_configuration[response_type]
+
+        diff = set(new_response_keys) - set(config.keys)
+
+        if len(diff) > 0:
+            config.keys = sorted(set(config.keys).union(set(new_response_keys)))
+            self._storage._write_transaction(
+                self._path / self._responses_file,
+                json.dumps(
+                    {
+                        c.response_type: c.to_dict()
+                        for c in responses_configuration.values()
+                    },
+                    default=str,
+                    indent=2,
+                ).encode("utf-8"),
+            )
+
+            del self.response_key_to_response_type

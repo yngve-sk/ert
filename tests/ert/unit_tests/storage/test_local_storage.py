@@ -754,6 +754,16 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
         model_ensemble.response_values[summary.name] = ds
 
+        model_experiment = self.model[storage_experiment.id]
+        response_keys = set(ds["response_key"].unique())
+
+        model_smry_config = next(
+            config for config in model_experiment.responses if config.name == "summary"
+        )
+        model_smry_config.keys = sorted(
+            set(model_smry_config.keys).union(response_keys)
+        )
+
     @rule(model_ensemble=ensembles)
     def get_responses(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
