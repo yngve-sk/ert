@@ -106,7 +106,14 @@ def data_for_key(
         key = key[6:]
 
     response_key_to_response_type = ensemble.experiment.response_key_to_response_type
-    response_key = next((k for k in response_key_to_response_type if k in key), None)
+
+    # Check for exact match first. For example if key is "FOPRH"
+    # it may stop at "FOPR", which would be incorrect
+    response_key = next((k for k in response_key_to_response_type if k == key), None)
+    if response_key is None:
+        response_key = next(
+            (k for k in response_key_to_response_type if k in key), None
+        )
 
     if response_key is not None:
         response_type = response_key_to_response_type[response_key]
