@@ -306,7 +306,7 @@ class LocalEnsemble(BaseMode):
         # Should also be faster due to lru cache on load_responses
         def _has_response(_response_type: str) -> bool:
             if (path / f"{_response_type}.parquet").exists():
-                return True
+                return realization in self.load_responses(response_type)["realization"]
 
             if (self.mount_point / f"{_response_type}.parquet").exists():
                 return (
