@@ -360,7 +360,7 @@ class LocalExperiment(BaseMode):
 
         diff = set(new_response_keys) - set(config.keys)
 
-        if len(diff) > 0:
+        if diff:
             config.keys = sorted(set(config.keys).union(set(new_response_keys)))
             self._storage._write_transaction(
                 self._path / self._responses_file,
