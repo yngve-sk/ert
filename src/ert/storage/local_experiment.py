@@ -342,9 +342,15 @@ class LocalExperiment(BaseMode):
 
         return mapping
 
-    def update_response_keys(
+    def _update_response_keys(
         self, response_type: str, new_response_keys: List[str]
     ) -> None:
+        """
+        When a response is saved to storage, it may contain keys
+        that are not explicitly declared in the config. Calling this ensures
+        that the response config saved in this storage has keys corresponding
+        to the actual received responses.
+        """
         if not any(
             k for k in new_response_keys if k not in self.response_key_to_response_type
         ):

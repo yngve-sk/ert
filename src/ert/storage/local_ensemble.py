@@ -878,7 +878,7 @@ class LocalEnsemble(BaseMode):
         )
 
         response_keys = data["response_key"].unique().to_list()
-        self.experiment.update_response_keys(response_type, response_keys)
+        self.experiment._update_response_keys(response_type, response_keys)
 
     def calculate_std_dev_for_parameter(self, parameter_group: str) -> xr.Dataset:
         if parameter_group not in self.experiment.parameter_configuration:
