@@ -98,9 +98,6 @@ class LibresFacade:
             if isinstance(val, Field)
         ]
 
-    def get_gen_kw(self) -> list[str]:
-        return self.config.ensemble_config.get_keylist_gen_kw()
-
     def get_ensemble_size(self) -> int:
         return self.config.model_config.num_realizations
 
@@ -210,6 +207,7 @@ class LibresFacade:
         storage: Storage,
         ensemble: Ensemble,
         *args: Any,
+        **kwargs: dict[str, Any],
     ) -> Any:
         warnings.warn(
             "run_ertscript is deprecated, use the workflow runner",
@@ -220,10 +218,19 @@ class LibresFacade:
             [],
             argument_values=args,
             fixtures={
-                "ert_config": self.config,
-                "ensemble": ensemble,
                 "storage": storage,
+                "ensemble": ensemble,
+                "reports_dir": (
+                    storage.path.parent
+                    / "reports"
+                    / Path(str(self.user_config_file)).stem
+                    / ensemble.name
+                ),
+                "observation_settings": self.config.analysis_config.observation_settings,
+                "es_settings": self.config.analysis_config.es_module,
+                "random_seed": self.config.random_seed,
             },
+            **kwargs,
         )
 
     @classmethod

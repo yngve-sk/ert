@@ -93,7 +93,10 @@ class EnsembleExperiment(BaseRunModel):
                 raise ErtRunError(str(exc)) from exc
 
         if not restart:
-            self.run_workflows(HookRuntime.PRE_EXPERIMENT)
+            self.run_workflows(
+                HookRuntime.PRE_EXPERIMENT,
+                fixtures={"random_seed": self.random_seed},
+            )
             self.experiment = self._storage.create_experiment(
                 name=self.experiment_name,
                 parameters=(
@@ -143,7 +146,14 @@ class EnsembleExperiment(BaseRunModel):
             self.ensemble,
             evaluator_server_config,
         )
-        self.run_workflows(HookRuntime.POST_EXPERIMENT)
+        self.run_workflows(
+            HookRuntime.POST_EXPERIMENT,
+            fixtures={
+                "random_seed": self.random_seed,
+                "storage": self._storage,
+                "ensemble": self.ensemble,
+            },
+        )
 
     @classmethod
     def name(cls) -> str:
