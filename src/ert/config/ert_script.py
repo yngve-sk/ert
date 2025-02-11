@@ -84,24 +84,49 @@ class ErtScript:
         argument_types: list[type[Any]],
         argument_values: list[str],
         fixtures: WorkflowFixtures | None = None,
+        **kwargs: dict[str, Any],
     ) -> Any:
         fixtures = {} if fixtures is None else fixtures
-        arguments = []
+        workflow_args = []
         for index, arg_value in enumerate(argument_values):
             arg_type = argument_types[index] if index < len(argument_types) else str
 
             if arg_value is not None:
-                arguments.append(arg_type(arg_value))
+                workflow_args.append(arg_type(arg_value))
             else:
-                arguments.append(None)
-        fixtures["workflow_args"] = arguments
+                workflow_args.append(None)
+
+        fixtures["workflow_args"] = workflow_args
+
+        fixture_args = []
+        all_func_args = inspect.signature(self.run).parameters
+        is_using_wf_args_fixture = "workflow_args" in all_func_args
+
         try:
-            func_args = inspect.signature(self.run).parameters
+            if not is_using_wf_args_fixture:
+                fixture_or_kw_arguments = list(all_func_args)[len(workflow_args) :]
+            else:
+                fixture_or_kw_arguments = list(all_func_args)
+
+            func_args = {k: all_func_args[k] for k in fixture_or_kw_arguments}
+
+            kwargs_defaults = {
+                k: v.default
+                for k, v in func_args.items()
+                if k not in fixtures
+                and v.kind != v.VAR_POSITIONAL
+                and not str(v).startswith("*")
+                and v.default != v.empty
+            }
+            use_kwargs = {
+                k: (kwargs or {}).get(k, default_value)
+                for k, default_value in ({**kwargs_defaults, **kwargs}).items()
+            }
             # If the user has specified *args, we skip injecting fixtures, and just
             # pass the user configured arguments
             if not any(p.kind == p.VAR_POSITIONAL for p in func_args.values()):
                 try:
-                    arguments = self.insert_fixtures(func_args, fixtures)
+                    fixture_args = self.insert_fixtures(func_args, fixtures, use_kwargs)
                 except ValueError as e:
                     # This is here for backwards compatibility, the user does not have *argv
                     # but positional arguments. Can not be mixed with using fixtures.
@@ -109,7 +134,19 @@ class ErtScript:
                         f"Mixture of fixtures and positional arguments, err: {e}"
                     )
 
-            return self.run(*arguments)
+            positional_args = (
+                fixture_args
+                if is_using_wf_args_fixture
+                else [*workflow_args, *fixture_args]
+            )
+            if not positional_args and not use_kwargs:
+                return self.run()
+            elif positional_args and not use_kwargs:
+                return self.run(*positional_args)
+            elif not positional_args and use_kwargs:
+                return self.run(**use_kwargs)
+            else:
+                return self.run(*positional_args, **use_kwargs)
         except AttributeError as e:
             error_msg = str(e)
             if not hasattr(self, "run"):
@@ -137,18 +174,20 @@ class ErtScript:
         self,
         func_args: dict[str, inspect.Parameter],
         fixtures: WorkflowFixtures,
+        kwargs: dict[str, Any],
     ) -> list[Any]:
         arguments = []
         errors = []
         for val in func_args:
             if val in fixtures:
                 arguments.append(fixtures.get(val))
-            else:
+            elif val not in kwargs:
                 errors.append(val)
         if errors:
+            kwargs_str = ",".join(f"{k}='{v}'" for k, v in kwargs.items())
             raise ValueError(
                 f"Plugin: {self.__class__.__name__} misconfigured, arguments: {errors} "
-                f"not found in fixtures: {list(fixtures)}"
+                f"not found in fixtures: {list(fixtures)} or kwargs {kwargs_str}"
             )
         return arguments
 

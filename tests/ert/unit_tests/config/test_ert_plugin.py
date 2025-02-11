@@ -138,7 +138,7 @@ def test_plugin_with_fixtures_and_enough_arguments():
     )
 
 
-def test_plugin_with_fixtures_and_enough_arguments_positional():
+def test_plugin_with_fixtures_and_enough_positional_arguments():
     class FixturePlugin(ErtPlugin):
         def run(self, a, b, c, ensemble):
             return ([a, b, c], ensemble)
