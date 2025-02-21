@@ -362,24 +362,29 @@ class RunDialog(QFrame):
         simulation_thread = ErtThread(
             name="ert_gui_simulation_thread", target=run, daemon=True
         )
+        worker, worker_thread = self.setup_event_worker()
+        self.destroyed.connect(lambda: _stop_worker(worker_thread, worker))
 
-        self._worker_thread = QThread(parent=self)
+        self.simulation_done.connect(worker.stop)
 
-        self._worker = QueueEmitter(self._event_queue)
-        self._worker.done.connect(self._worker_thread.quit)
-        self._worker.new_event.connect(self._on_event)
-        self._worker.moveToThread(self._worker_thread)
-
-        self.destroyed.connect(lambda: _stop_worker(self._worker_thread, self._worker))
-
-        self.simulation_done.connect(self._worker.stop)
-
-        self._worker_thread.started.connect(self._worker.consume_and_emit)
         self._ticker.start(self._RUN_TIME_POLL_RATE)
-
-        self._worker_thread.start()
+        worker_thread.start()
         simulation_thread.start()
-        self._notifier.set_is_simulation_running(True)
+
+        if self._notifier is not None:
+            self._notifier.set_is_simulation_running(True)
+
+    def setup_event_worker(self) -> tuple[QueueEmitter, QThread]:
+        worker_thread = QThread(parent=self)
+
+        worker = QueueEmitter(self._event_queue)
+        worker.done.connect(worker_thread.quit)
+        worker.new_event.connect(self._on_event)
+        worker.moveToThread(worker_thread)
+
+        worker_thread.started.connect(worker.consume_and_emit)
+
+        return worker, worker_thread
 
     def killJobs(self) -> QMessageBox.StandardButton:
         msg = "Are you sure you want to terminate the currently running experiment?"
