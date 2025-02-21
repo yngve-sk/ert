@@ -362,13 +362,13 @@ class RunDialog(QFrame):
         simulation_thread = ErtThread(
             name="ert_gui_simulation_thread", target=run, daemon=True
         )
-        worker, worker_thread = self.setup_event_worker()
-        self.destroyed.connect(lambda: _stop_worker(worker_thread, worker))
+        event_worker, event_worker_thread = self.setup_event_worker()
+        self.destroyed.connect(lambda: _stop_worker(event_worker_thread, event_worker))
 
-        self.simulation_done.connect(worker.stop)
+        self.simulation_done.connect(event_worker.stop)
 
         self._ticker.start(self._RUN_TIME_POLL_RATE)
-        worker_thread.start()
+        event_worker_thread.start()
         simulation_thread.start()
 
         if self._notifier is not None:
