@@ -16,6 +16,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
+import polars as pl
 from numpy._typing import NDArray
 from ropt.enums import EventType, OptimizerExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
@@ -821,11 +822,11 @@ class EverestRunModel(BaseRunModel):
         self, ensemble: Ensemble
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
         objective_aliases = self._everest_config.function_aliases
-        objective_names = self._everest_config.objective_names
-        objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
+        objective_names = [
+            objective_aliases.get(n, n) for n in self._everest_config.objective_names
+        ]
 
         constraint_names = self._everest_config.constraint_names
-        constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
 
         if not any(self.active_realizations):
             nan_objectives = np.full(
@@ -840,24 +841,42 @@ class EverestRunModel(BaseRunModel):
             )
             return nan_objectives, nan_constraints
 
-        for sim_id, successful in enumerate(self.active_realizations):
-            if not successful:
-                logger.error(f"Simulation {sim_id} failed.")
-                objectives[sim_id, :] = np.nan
-                constraints[sim_id, :] = np.nan
-                continue
+        gen_data = ensemble.load_responses(
+            "gen_data",
+            tuple(
+                r for r in range(ensemble.ensemble_size) if self.active_realizations[r]
+            ),
+        )["realization", "response_key", "values"]
 
-            for i, obj_name in enumerate(objective_names):
-                data = ensemble.load_responses(
-                    objective_aliases.get(obj_name, obj_name), (sim_id,)
-                )
-                objectives[sim_id, i] = data["values"].item()
+        inactive = [i for i, a in enumerate(self.active_realizations) if a is False]
+        num_inactive = len(inactive)
+        num_response_keys = len(objective_names) + len(constraint_names)
+        gen_data_inactive = pl.DataFrame(
+            {
+                "realization": pl.Series(
+                    np.repeat(inactive, num_response_keys),
+                    dtype=pl.UInt16,
+                ),
+                "response_key": pl.Series(
+                    np.repeat(constraint_names + objective_names, num_inactive),
+                    dtype=pl.String,
+                ),
+                "values": pl.Series(
+                    num_inactive * num_response_keys * [np.nan],
+                    dtype=pl.Float32,
+                ),
+            }
+        )
 
-            for i, constr_name in enumerate(constraint_names):
-                data = ensemble.load_responses(constr_name, (sim_id,))
-                constraints[sim_id, i] = data["values"].item()
+        gen_data = (
+            pl.concat([gen_data, gen_data_inactive])
+            .sort(by="realization")
+            .pivot(on="response_key", values="values")
+        )
 
-        return objectives, constraints if constraint_names else None
+        return gen_data[objective_names].to_numpy(), gen_data[
+            constraint_names
+        ].to_numpy() if constraint_names else None
 
     def _add_results_to_cache(
         self,
