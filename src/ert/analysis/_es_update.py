@@ -152,15 +152,10 @@ def _expand_wildcards(
     return sorted(set(matches))
 
 
-def _load_observations_and_responses(
+def _observations_and_responses_numpy(
     ensemble: Ensemble,
-    alpha: float,
-    std_cutoff: float,
-    global_std_scaling: float,
     iens_active_index: npt.NDArray[np.int_],
     selected_observations: Iterable[str],
-    auto_scale_observations: list[ObservationGroups] | None,
-    progress_callback: Callable[[AnalysisEvent], None],
 ) -> tuple[
     npt.NDArray[np.float64],
     tuple[
@@ -190,6 +185,29 @@ def _load_observations_and_responses(
     )
     indexes = observations_and_responses.select("index").to_numpy().reshape((-1,))
 
+    return S, observations, errors, obs_keys, indexes
+
+
+def _load_observations_and_responses(
+    ensemble: Ensemble,
+    alpha: float,
+    std_cutoff: float,
+    global_std_scaling: float,
+    iens_active_index: npt.NDArray[np.int_],
+    selected_observations: Iterable[str],
+    auto_scale_observations: list[ObservationGroups] | None,
+    progress_callback: Callable[[AnalysisEvent], None],
+) -> tuple[
+    npt.NDArray[np.float64],
+    tuple[
+        npt.NDArray[np.float64],
+        npt.NDArray[np.float64],
+        list[ObservationAndResponseSnapshot],
+    ],
+]:
+    S, observations, errors, obs_keys, indexes = _observations_and_responses_numpy(
+        ensemble, iens_active_index, selected_observations
+    )
     # Inflating measurement errors by a factor sqrt(global_std_scaling) as shown
     # in for example evensen2018 - Analysis of iterative ensemble smoothers for
     # solving inverse problems.
