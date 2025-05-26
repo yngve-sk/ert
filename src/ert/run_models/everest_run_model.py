@@ -147,7 +147,7 @@ class EverestRunModel(BaseRunModel):
     constraint_names: list[str]
 
     model_realizations: list[NonNegativeInt]
-    delete_run_path: bool
+    keep_run_path: bool
 
     _result: OptimalResult | None = PrivateAttr(default=None)
     _exit_code: EverestExitCode | None = PrivateAttr(default=None)
@@ -253,7 +253,7 @@ class EverestRunModel(BaseRunModel):
             control_names=control_names,
             controls=controls,
             simulation_dir=everest_config.simulation_dir,
-            delete_run_path=delete_run_path,
+            keep_run_path=not delete_run_path,
             objective_names=objective_names,
             constraint_names=constraint_names,
             formatted_control_names=formatted_control_names,
@@ -817,7 +817,7 @@ class EverestRunModel(BaseRunModel):
 
     def _delete_run_path(self, run_args: list[RunArg]) -> None:
         logger.debug("Simulation callback called")
-        if self.delete_run_path:
+        if not self.keep_run_path:
             for i, real in self.get_current_snapshot().reals.items():
                 path_to_delete = run_args[int(i)].runpath
                 if real["status"] == "Finished" and os.path.isdir(path_to_delete):
