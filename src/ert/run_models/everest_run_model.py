@@ -188,9 +188,9 @@ class EverestRunModel(BaseRunModel):
         storage_dir = os.path.join(everest_config.output_dir, STORAGE_DIR)
 
         if status_queue is None:
-            status_queue = queue.SimpleQueue()  # PrivateAttr
+            status_queue = queue.SimpleQueue()
 
-        config_dict = everest_to_ert_config_dict(everest_config)  # Remove
+        config_dict = everest_to_ert_config_dict(everest_config)
 
         runpath_file: Path = Path(
             os.path.join(everest_config.output_dir, ".res_runpath_list")
