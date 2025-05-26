@@ -445,7 +445,6 @@ class EverestRunModel(BaseRunModel):
         optimizer = BasicOptimizer(
             enopt_config=self.enopt_config,
             evaluator=self._forward_model_evaluator,
-            # everest_config=self._everest_config,
         )
 
         # Before each batch evaluation we check if we should abort:
