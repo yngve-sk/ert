@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 from uuid import UUID
 
 import numpy as np
@@ -22,9 +22,6 @@ from ert.trace import tracer
 from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, UpdateRunModel
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 

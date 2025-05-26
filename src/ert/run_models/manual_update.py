@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from pydantic import PrivateAttr
@@ -10,10 +10,6 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.storage import Ensemble
 
 from .base_run_model import ErtRunError, UpdateRunModel
-
-if TYPE_CHECKING:
-    pass
-
 
 logger = logging.getLogger(__name__)
 

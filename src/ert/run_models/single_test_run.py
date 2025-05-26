@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from pydantic import Field
 
 from ert.run_models import EnsembleExperiment
-
-if TYPE_CHECKING:
-    pass
 
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
 

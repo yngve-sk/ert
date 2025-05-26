@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import functools
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -32,10 +32,6 @@ from ..plugins import (
 from ..run_arg import create_run_arguments
 from .base_run_model import ErtRunError, UpdateRunModel
 from .event import RunModelStatusEvent, RunModelUpdateBeginEvent
-
-if TYPE_CHECKING:
-    pass
-
 
 logger = logging.getLogger(__name__)
 
