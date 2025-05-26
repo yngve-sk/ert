@@ -45,9 +45,9 @@ class EnsembleInformationFilter(UpdateRunModel):
     ert_templates: list[tuple[str, str]]
 
     start_iteration: int = 0
-    total_iterations: int = 2
 
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
+    _total_iterations: int = PrivateAttr(default=2)
 
     def __init__(self, **data: Any) -> None:
         observations = data.pop("observations", None)

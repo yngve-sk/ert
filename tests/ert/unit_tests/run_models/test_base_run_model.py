@@ -130,7 +130,7 @@ def test_check_if_runpath_exists_with_substitutions(
         substitutions=subs_list,
         active_realizations=active_realizations_mask,
         start_iteration=start_iteration,
-        total_iterations=number_of_iterations,
+        _total_iterations=number_of_iterations,
     )
     assert brm.check_if_runpath_exists() == expected
 
@@ -521,7 +521,7 @@ def test_progress_calculations(
 ):
     brm = create_base_run_model(
         start_iteration=start_iteration,
-        total_iterations=total_iterations,
+        _total_iterations=total_iterations,
         active_realizations=[True] * len(real_status_dict),
     )
 

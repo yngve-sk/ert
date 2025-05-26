@@ -182,7 +182,6 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     active_realizations: list[bool]
     log_path: Path
     random_seed: int
-    total_iterations: int = 1
     start_iteration: int = 0
     minimum_required_realizations: int = 0
     support_restart: bool = True
@@ -200,11 +199,15 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     _iter_snapshot: dict[int, EnsembleSnapshot] = PrivateAttr(default_factory=dict)
     _restart: bool = PrivateAttr(False)
     _run_paths: Runpaths = PrivateAttr()
+    _total_iterations: int = PrivateAttr(default=1)
 
-    def __init__(self, **data: Any) -> None:
+    def __init__(self, _total_iterations: int | None = None, **data: Any) -> None:
         status_queue = data.pop("status_queue", None)
         super().__init__(**data)
         self._status_queue = status_queue
+
+        if _total_iterations is not None:
+            self._total_iterations = _total_iterations
 
     def model_post_init(self, ctx: Any) -> None:
         self._initial_realizations_mask = self.active_realizations.copy()
@@ -517,8 +520,8 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             current_it_offset = current_iter - min(list(self._iter_snapshot.keys()))
 
             current_progress = (
-                (current_it_offset + realization_progress) / self.total_iterations
-                if self.total_iterations != 1
+                (current_it_offset + realization_progress) / self._total_iterations
+                if self._total_iterations != 1
                 else realization_progress
             )
 
@@ -534,7 +537,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             self.send_event(
                 FullSnapshotEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
-                    total_iterations=self.total_iterations,
+                    total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
                     status_count=status,
@@ -559,7 +562,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             self.send_event(
                 SnapshotUpdateEvent(
                     iteration_label=f"Running forecast for iteration: {iteration}",
-                    total_iterations=self.total_iterations,
+                    total_iterations=self._total_iterations,
                     progress=current_progress,
                     realization_count=realization_count,
                     status_count=status,
@@ -712,7 +715,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
         run_paths = []
         active_realizations = np.where(self.active_realizations)[0]
         for iteration in range(
-            self.start_iteration, self.total_iterations + self.start_iteration
+            self.start_iteration, self._total_iterations + self.start_iteration
         ):
             run_paths.extend(self._run_paths.get_paths(active_realizations, iteration))
         return run_paths

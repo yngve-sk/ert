@@ -29,7 +29,7 @@ class EnsembleSmoother(UpdateRunModel):
     ert_templates: list[tuple[str, str]]
 
     start_iteration: int = 0
-    total_iterations: int = 2
+    _total_iterations: int = PrivateAttr(default=2)
 
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
 

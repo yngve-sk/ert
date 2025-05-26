@@ -43,11 +43,11 @@ class MultipleDataAssimilation(UpdateRunModel):
     restart_run: bool
     prior_ensemble_id: str
     start_iteration: int = 0
-    total_iterations: int = 2
     weights: str
 
     _observations: dict[str, pl.DataFrame] = PrivateAttr()
     _parsed_weights: list[float] = PrivateAttr()
+    _total_iterations: int = PrivateAttr(default=2)
 
     def __init__(self, **data: Any) -> None:
         observations = data.pop("observations", None)
@@ -70,7 +70,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             raise ValueError("For non-restart run, experiment name must be set")
 
         self.start_iteration = start_iteration
-        self.total_iterations = total_iterations
+        self._total_iterations = total_iterations
         self.support_restart = False  # Continuation of old behavior,
         # Not sure if this makes perfect sense
 
