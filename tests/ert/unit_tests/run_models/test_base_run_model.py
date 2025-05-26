@@ -14,6 +14,7 @@ from ert.config import ErtConfig, ModelConfig, QueueConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models import BaseRunModel
 from ert.run_models.base_run_model import UserCancelled
+from ert.runpaths import Runpaths
 from ert.substitutions import Substitutions
 
 
@@ -35,7 +36,15 @@ def create_base_run_model(**kwargs):
         "user_config_file": MagicMock(spec=Path),
         "env_vars": MagicMock(spec=dict),
         "env_pr_fm_step": MagicMock(spec=dict),
-        "runpath_config": ModelConfig(),
+        # "runpath_config": ModelConfig(),
+        "run_paths": Runpaths(
+            jobname_format="jj",
+            runpath_format="rr",
+            runpath_file=".ert_runpath_list",
+            substitutions=None,
+            eclbase="eklips"
+        ),
+        "gen_kw_export_name": "parameters",
         "queue_config": MagicMock(spec=QueueConfig),
         "forward_model_steps": MagicMock(spec=list),
         "status_queue": MagicMock(spec=SimpleQueue),
@@ -47,7 +56,7 @@ def create_base_run_model(**kwargs):
     }
 
     class BaseRunModelWithMockSupport(BaseRunModel):
-        model_config = ConfigDict(frozen=False, extra="allow")
+        model_config = ConfigDict(frozen=False, extra="allow", allow_mutation=True)
 
     return BaseRunModelWithMockSupport(**(default_args | kwargs))
 
@@ -126,7 +135,12 @@ def test_check_if_runpath_exists_with_substitutions(
     model_config = ModelConfig(runpath_format_string=run_path)
     subs_list = Substitutions()
     brm = create_base_run_model(
-        runpath_config=model_config,
+        run_paths=Runpaths(
+            runpath_format=run_path,
+            jobname_format="Casecase",
+            runpath_file=".ert_runpath_list",
+            substitutions=subs_list,
+        ),
         substitutions=subs_list,
         active_realizations=active_realizations_mask,
         start_iteration=start_iteration,
@@ -185,11 +199,17 @@ def test_delete_run_path(run_path_format, active_realizations):
             expected_removed.append(run_path)
     share_path = Path("share")
     os.makedirs(share_path)
-    model_config = ModelConfig(runpath_format_string=run_path_format)
+    #model_config = ModelConfig(runpath_format_string=run_path_format)
     subs_list = Substitutions({"<ITER>": "0", "<ERTCASE>": "Case_Name"})
 
     brm = create_base_run_model(
-        runpath_config=model_config,
+        #runpath_config=model_config,
+        run_paths=Runpaths(
+            jobname_format="Casecase",
+            runpath_file=".ert_runpath_list",
+            runpath_format=run_path_format,
+            substitutions=subs_list,
+        ),
         substitutions=subs_list,
         active_realizations=active_realizations,
     )
@@ -559,7 +579,7 @@ def test_check_if_runpath_exists(
     active_mask: list,
     expected: bool,
 ):
-    def get_run_path_mock(realizations, iteration=None):
+    def get_run_path_mock(self, realizations, iteration=None):
         if iteration is not None:
             return [f"out/realization-{r}/iter-{iteration}" for r in realizations]
         return [f"out/realization-{r}" for r in realizations]
@@ -567,5 +587,5 @@ def test_check_if_runpath_exists(
     run_model = create_base_run_model(
         active_realizations=active_mask,
     )
-    run_model._run_paths.get_paths = get_run_path_mock
-    assert run_model.check_if_runpath_exists() == expected
+    with patch.object(Runpaths, "get_paths", new=get_run_path_mock):
+        assert run_model.check_if_runpath_exists() == expected

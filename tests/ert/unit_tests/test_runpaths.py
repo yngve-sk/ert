@@ -55,10 +55,10 @@ def test_runpath_file(tmp_path, job_format, runpath_format, expected_contents):
     assert not runpath_file.exists()
     context = Substitutions()
     runpaths = Runpaths(
-        job_format,
-        runpath_format,
-        runpath_file,
-        context,
+        jobname_format=job_format,
+        runpath_format=runpath_format,
+        runpath_file=str(runpath_file),
+        substitutions=context,
     )
     runpaths.write_runpath_list([0, 1], [3, 4])
 
@@ -71,10 +71,10 @@ def test_runpath_file_writer_substitution(tmp_path):
     context = Substitutions()
     context["<casename>"] = "my_case"
     runpaths = Runpaths(
-        "<casename>_job",
-        "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
-        runpath_file,
-        context,
+        jobname_format="<casename>_job",
+        runpath_format="/path/<casename>/ensemble-<IENS>/iteration<ITER>",
+        runpath_file=str(runpath_file),
+        substitutions=context,
     )
 
     runpaths.write_runpath_list([1], [1])
@@ -91,11 +91,11 @@ def test_runpath_file_writes_eclbase_when_present(tmp_path):
     context = Substitutions()
     context["<casename>"] = "my_case"
     runpaths = Runpaths(
-        "<casename>_job",
-        "/path/<casename>/ensemble-<IENS>/iteration<ITER>",
-        runpath_file,
-        context,
-        "path/to/eclbase",
+        jobname_format="<casename>_job",
+        runpath_format="/path/<casename>/ensemble-<IENS>/iteration<ITER>",
+        runpath_file=str(runpath_file),
+        substitutions=context,
+        eclbase="path/to/eclbase",
     )
 
     runpaths.write_runpath_list([1], [1])

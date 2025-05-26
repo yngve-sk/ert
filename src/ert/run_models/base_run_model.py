@@ -170,11 +170,10 @@ class BaseRunModelAPI:
 
 class BaseRunModel(BaseModelWithContextSupport, ABC):
     storage_path: str
-    runpath_file: Path
     user_config_file: Path
     env_vars: dict[str, str]
     env_pr_fm_step: dict[str, dict[str, Any]]
-    runpath_config: ModelConfig
+    run_paths: Runpaths
     queue_config: QueueConfig
     forward_model_steps: list[ForwardModelStep]
     substitutions: Substitutions
@@ -186,6 +185,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     start_iteration: int = 0
     minimum_required_realizations: int = 0
     support_restart: bool = True
+    gen_kw_export_name: str
 
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)
@@ -194,12 +194,10 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
     _completed_realizations_mask: list[bool] = PrivateAttr(default_factory=list)
     _storage: Storage = PrivateAttr()
     _context_env: dict[str, str] = PrivateAttr(default_factory=dict)
-    _model_config: ModelConfig = PrivateAttr()
     _rng: np.random.Generator = PrivateAttr()
     _end_queue: queue.SimpleQueue[str] = PrivateAttr(default_factory=queue.SimpleQueue)
     _iter_snapshot: dict[int, EnsembleSnapshot] = PrivateAttr(default_factory=dict)
     _restart: bool = PrivateAttr(False)
-    _run_paths: Runpaths = PrivateAttr()
 
     def __init__(self, **data: Any) -> None:
         status_queue = data.pop("status_queue", None)
@@ -210,15 +208,6 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
         self._initial_realizations_mask = self.active_realizations.copy()
         self._storage = open_storage(self.storage_path, mode="w")
         self._rng = np.random.default_rng(self.random_seed)
-        self._model_config = self.runpath_config
-
-        self._run_paths = Runpaths(
-            jobname_format=self._model_config.jobname_format_string,
-            runpath_format=self._model_config.runpath_format_string,
-            filename=str(self.runpath_file),
-            substitutions=self.substitutions,
-            eclbase=self._model_config.eclbase_format_string,
-        )
 
     @property
     def api(self) -> BaseRunModelAPI:
@@ -714,7 +703,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
         for iteration in range(
             self.start_iteration, self.total_iterations + self.start_iteration
         ):
-            run_paths.extend(self._run_paths.get_paths(active_realizations, iteration))
+            run_paths.extend(self.run_paths.get_paths(active_realizations, iteration))
         return run_paths
 
     def check_if_runpath_exists(self) -> bool:
@@ -780,8 +769,8 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
             env_pr_fm_step=self.env_pr_fm_step,
             forward_model_steps=self.forward_model_steps,
             substitutions=self.substitutions,
-            parameters_file=self._model_config.gen_kw_export_name,
-            runpaths=self._run_paths,
+            parameters_file=self.gen_kw_export_name,
+            runpaths=self.run_paths,
             context_env=self._context_env,
         )
 
@@ -791,7 +780,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
                 random_seed=self.random_seed,
-                run_paths=self._run_paths,
+                run_paths=self.run_paths,
             ),
         )
         try:
@@ -830,7 +819,7 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
                 ensemble=ensemble,
                 reports_dir=self.reports_dir(experiment_name=ensemble.experiment.name),
                 random_seed=self.random_seed,
-                run_paths=self._run_paths,
+                run_paths=self.run_paths,
             ),
         )
 
@@ -866,7 +855,7 @@ class UpdateRunModel(BaseRunModel):
             es_settings=self.analysis_settings,
             random_seed=self.random_seed,
             reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
-            run_paths=self._run_paths,
+            run_paths=self.run_paths,
         )
 
         posterior = self._storage.create_ensemble(

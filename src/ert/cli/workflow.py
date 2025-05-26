@@ -33,7 +33,7 @@ def execute_workflow(
             "run_paths": Runpaths(
                 jobname_format=ert_config.runpath_config.jobname_format_string,
                 runpath_format=ert_config.runpath_config.runpath_format_string,
-                filename=str(ert_config.runpath_file),
+                runpath_file=str(ert_config.runpath_file),
                 substitutions=ert_config.substitutions,
                 eclbase=ert_config.runpath_config.eclbase_format_string,
             ),

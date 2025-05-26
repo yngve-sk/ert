@@ -1,10 +1,15 @@
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
+from pydantic import BaseModel, field_validator
+
+from ert.config.model_config import DEFAULT_JOBNAME_FORMAT, DEFAULT_RUNPATH, \
+    _replace_runpath_format
 from ert.substitutions import Substitutions
 
 
-class Runpaths:
+class Runpaths(BaseModel):
     """The Runpaths are the ensemble workspace directories.
 
     Generally there is one runpath for each realization and iteration, although
@@ -28,36 +33,43 @@ class Runpaths:
 
     """
 
-    def __init__(
-        self,
-        jobname_format: str,
-        runpath_format: str,
-        filename: str | Path = ".ert_runpath_list",
-        substitutions: Substitutions | None = None,
-        eclbase: str | None = None,
-    ):
-        self._jobname_format = jobname_format
-        self.runpath_list_filename = Path(filename)
-        self._runpath_format = str(Path(runpath_format).resolve())
-        self._substitutions = substitutions or Substitutions()
-        self._eclbase = eclbase
+    jobname_format: str = DEFAULT_JOBNAME_FORMAT
+    runpath_format: str = DEFAULT_RUNPATH
+    runpath_file: str = ".ert_runpath_list"
+    substitutions: Substitutions | None = None
+    eclbase: str | None = None
+
+    @field_validator("eclbase", mode="before")
+    @classmethod
+    def transform(cls, eclbase: str) -> str:
+        return _replace_runpath_format(eclbase)
+
+    @field_validator("jobname_format", mode="before")
+    @classmethod
+    def transform(cls, jobname_format: str) -> str:
+        return _replace_runpath_format(jobname_format)
+
+    def model_post_init(self, context: Any) -> None:
+        self.runpath_file = Path(self.runpath_file)
+        self.runpath_format = str(Path(self.runpath_format).resolve())
+        self.substitutions = self.substitutions or Substitutions()
 
     def set_ert_ensemble(self, ensemble_name: str) -> None:
-        self._substitutions["<ERT-CASE>"] = ensemble_name
-        self._substitutions["<ERTCASE>"] = ensemble_name
+        self.substitutions["<ERT-CASE>"] = ensemble_name
+        self.substitutions["<ERTCASE>"] = ensemble_name
 
     def get_paths(self, realizations: Iterable[int], iteration: int) -> list[str]:
         return [
-            self._substitutions.substitute_real_iter(
-                self._runpath_format, realization, iteration
+            self.substitutions.substitute_real_iter(
+                self.runpath_format, realization, iteration
             )
             for realization in realizations
         ]
 
     def get_jobnames(self, realizations: Iterable[int], iteration: int) -> list[str]:
         return [
-            self._substitutions.substitute_real_iter(
-                self._jobname_format, realization, iteration
+            self.substitutions.substitute_real_iter(
+                self.jobname_format, realization, iteration
             )
             for realization in realizations
         ]
@@ -86,17 +98,17 @@ class Runpaths:
         :param iteration_numbers: The list of iterations to write entries for
         :param realization_numbers: The list of realizations to write entries for
         """
-        Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
+        Path(self.runpath_file).parent.mkdir(parents=True, exist_ok=True)
+        with open(self.runpath_file, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name_or_eclbase = self._substitutions.substitute_real_iter(
-                        self._eclbase or self._jobname_format,
+                    job_name_or_eclbase = self.substitutions.substitute_real_iter(
+                        self.eclbase or self.jobname_format,
                         realization,
                         iteration,
                     )
-                    runpath = self._substitutions.substitute_real_iter(
-                        self._runpath_format, realization, iteration
+                    runpath = self.substitutions.substitute_real_iter(
+                        self.runpath_format, realization, iteration
                     )
 
                     filehandle.write(

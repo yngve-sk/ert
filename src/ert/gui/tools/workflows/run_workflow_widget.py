@@ -143,7 +143,7 @@ class RunWorkflowWidget(QWidget):
                 "run_paths": Runpaths(
                     jobname_format=self.config.runpath_config.jobname_format_string,
                     runpath_format=self.config.runpath_config.runpath_format_string,
-                    filename=str(self.config.runpath_file),
+                    runpath_file=str(self.config.runpath_file),
                     substitutions=self.config.substitutions,
                     eclbase=self.config.runpath_config.eclbase_format_string,
                 ),

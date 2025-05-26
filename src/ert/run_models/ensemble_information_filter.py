@@ -97,7 +97,7 @@ class EnsembleInformationFilter(UpdateRunModel):
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_args = create_run_arguments(
-            self._run_paths,
+            self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=prior,
         )
@@ -124,7 +124,7 @@ class EnsembleInformationFilter(UpdateRunModel):
         posterior = self.update(prior, ensemble_format % 1)
 
         posterior_args = create_run_arguments(
-            self._run_paths,
+            self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=posterior,
         )
@@ -167,7 +167,7 @@ class EnsembleInformationFilter(UpdateRunModel):
             es_settings=self.analysis_settings,
             random_seed=self.random_seed,
             reports_dir=self.reports_dir(experiment_name=prior.experiment.name),
-            run_paths=self._run_paths,
+            run_paths=self.run_paths,
         )
 
         posterior = self._storage.create_ensemble(

@@ -85,7 +85,7 @@ class EnsembleSmoother(UpdateRunModel):
         )
         self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
         prior_args = create_run_arguments(
-            self._run_paths,
+            self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=prior,
         )
@@ -112,7 +112,7 @@ class EnsembleSmoother(UpdateRunModel):
         posterior = self.update(prior, ensemble_format % 1)
 
         posterior_args = create_run_arguments(
-            self._run_paths,
+            self.run_paths,
             np.array(self.active_realizations, dtype=bool),
             ensemble=posterior,
         )

@@ -265,7 +265,13 @@ class EverestRunModel(BaseRunModel):
             optimization_output_dir=everest_config.optimization_output_dir,
             log_path=everest_config.log_dir,
             random_seed=123,
-            runpath_file=runpath_file,
+            run_paths=Runpaths(
+                jobname_format=model_config.jobname_format_string,
+                runpath_format=model_config.runpath_format_string,
+                runpath_file=str(runpath_file),
+                substitutions=substitutions,
+                eclbase=model_config.eclbase_format_string,
+            ),
             # Mutated throughout execution of Everest
             # (Not totally in conformity with ERT runmodel logic)
             active_realizations=[],
@@ -287,6 +293,7 @@ class EverestRunModel(BaseRunModel):
             status_queue=status_queue,
             support_restart=False,
             optimization_callback=optimization_callback,
+            gen_kw_export_name="not_used_by_everest"
         )
 
     @classmethod
@@ -800,18 +807,22 @@ class EverestRunModel(BaseRunModel):
         substitutions = self.substitutions
         self.active_realizations = [True] * len(sim_to_model_realization)
         for sim_id, model_realization in enumerate(sim_to_model_realization):
+            # Note: Keep in mind that this
+            # mutates substitutions passed in to self.run_paths
             substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
-        run_paths = Runpaths(
-            jobname_format=self.runpath_config.jobname_format_string,
-            runpath_format=self.runpath_config.runpath_format_string,
-            filename=str(self.runpath_file),
-            substitutions=substitutions,
-            eclbase=self.runpath_config.eclbase_format_string,
-        )
+
+
+        #run_paths = Runpaths(
+        #    jobname_format=self.runpath_config.jobname_format_string,
+        #    runpath_format=self.runpath_config.runpath_format_string,
+        #    runpath_file=str(self.runpath_file),
+        #    substitutions=substitutions,
+        #    eclbase=self.runpath_config.eclbase_format_string,
+        #)
         return create_run_arguments(
-            run_paths,
+            self.run_paths,
             self.active_realizations,
             ensemble=ensemble,
         )

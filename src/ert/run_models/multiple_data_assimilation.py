@@ -147,7 +147,7 @@ class MultipleDataAssimilation(UpdateRunModel):
             self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
             self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
             prior_args = create_run_arguments(
-                self._run_paths,
+                self.run_paths,
                 np.array(self.active_realizations, dtype=bool),
                 ensemble=prior,
             )
@@ -183,7 +183,7 @@ class MultipleDataAssimilation(UpdateRunModel):
                 weight=weight,
             )
             posterior_args = create_run_arguments(
-                self._run_paths,
+                self.run_paths,
                 self.active_realizations,
                 ensemble=posterior,
             )
