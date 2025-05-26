@@ -121,8 +121,6 @@ class MultipleDataAssimilation(UpdateRunModel):
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
 
-            # used to be self._relative_weights, which is "unscaled"
-            # is the weights before making their sum of reciprocals 1
             sim_args = {"weights": self.weights}
 
             experiment = self._storage.create_experiment(
