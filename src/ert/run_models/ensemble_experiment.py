@@ -102,7 +102,6 @@ class EnsembleExperiment(BaseRunModel):
         else:
             # Storage is closed on completion of experiment
             # If restart, we re-open it
-            print("Restart clause")
             self._storage = open_storage(self.storage_path, mode="w")
             self.active_realizations = self._create_mask_from_failed_realizations()
 
