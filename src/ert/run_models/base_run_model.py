@@ -37,6 +37,7 @@ from ert.config import (
     DesignMatrix,
     ESSettings,
     ForwardModelStep,
+    GenKwConfig,
     HookRuntime,
     ModelConfig,
     ObservationSettings,
@@ -855,11 +856,12 @@ class BaseRunModel(BaseModelWithContextSupport, ABC):
 class HasDesignParameters:
     design_matrix: DesignMatrix | None
     parameter_configuration: list[ParameterConfig]
+    active_realizations: list[bool]
 
     @cached_property
     def parsed_design_matrix(
         self,
-    ) -> tuple[list[ParameterConfig], tuple[str, pd.DataFrame] | None]:
+    ) -> tuple[list[ParameterConfig], tuple[GenKwConfig, pd.DataFrame] | None]:
         parameters_config = self.parameter_configuration
         design_matrix = self.design_matrix
         design_matrix_group = None
@@ -886,7 +888,9 @@ class HasDesignParameters:
 
         return parameters_config, design_matrix_info
 
-    def experiment_parameters(self, include_design_matrix: bool = False):
+    def experiment_parameters(
+        self, include_design_matrix: bool = False
+    ) -> list[ParameterConfig]:
         parameters_config = self.parameter_configuration
         design_matrix_group = None
 
@@ -899,7 +903,7 @@ class HasDesignParameters:
             [design_matrix_group] if design_matrix_group else []
         )
 
-    def save_design_matrix_to_ensemble(self, ensemble: Ensemble):
+    def save_design_matrix_to_ensemble(self, ensemble: Ensemble) -> None:
         _, design_matrix_info = self.parsed_design_matrix
 
         if design_matrix_info is not None:
