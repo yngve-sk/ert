@@ -325,7 +325,7 @@ def _setup_ensemble_information_filter(
     )
 
 
-def _determine_restart_info(args: Namespace) -> tuple[bool, str]:
+def _determine_restart_info(args: Namespace) -> tuple[bool, str | None]:
     """Handles differences in configuration between CLI and GUI.
 
     Returns

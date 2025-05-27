@@ -34,7 +34,7 @@ class MultipleDataAssimilation(HasDesignParameters, UpdateRunModel):
     response_configuration: list[ResponseConfig]
     ert_templates: list[tuple[str, str]]
     restart_run: bool
-    prior_ensemble_id: str
+    prior_ensemble_id: str | None
     start_iteration: int = 0
     weights: str
 
@@ -79,6 +79,7 @@ class MultipleDataAssimilation(HasDesignParameters, UpdateRunModel):
         self._restart = restart
         if self.restart_run:
             id_ = self.prior_ensemble_id
+            assert id_ is not None
             try:
                 ensemble_id = UUID(id_)
                 prior = self._storage.get_ensemble(ensemble_id)
