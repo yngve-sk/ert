@@ -6,6 +6,7 @@ TEST_RUN_MODE = "test_run"
 WORKFLOW_MODE = "workflow"
 EVALUATE_ENSEMBLE_MODE = "evaluate_ensemble"
 MANUAL_UPDATE_MODE = "manual_update"
+MANUAL_ENIF_UPDATE_MODE = "manual_enif_update"
 
 MODULE_MODE = {
     "EnsembleSmoother": ENSEMBLE_SMOOTHER_MODE,
@@ -14,4 +15,5 @@ MODULE_MODE = {
     "SingleTestRun": TEST_RUN_MODE,
     "EvaluateEnsemble": EVALUATE_ENSEMBLE_MODE,
     "ManualUpdate": MANUAL_UPDATE_MODE,
+    "ManualEnIFUpdate": MANUAL_ENIF_UPDATE_MODE,
 }
