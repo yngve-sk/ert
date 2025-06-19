@@ -1,7 +1,6 @@
 import dataclasses
 import os
 from collections.abc import Iterable
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, cast
 
@@ -12,15 +11,22 @@ from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
 
 from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import (
+    InvalidResponseFile,
+    ResponseConfig,
+    ResponseMetadata,
+    ert_response,
+)
 from .responses_index import responses_index
 
 
-@dataclass
+@ert_response
 class GenDataConfig(ResponseConfig):
     name: str = "gen_data"
     report_steps_list: list[list[int] | None] = dataclasses.field(default_factory=list)
     has_finalized_keys: bool = True
+
+    type: str = "gen_data"
 
     @property
     def metadata(self) -> list[ResponseMetadata]:

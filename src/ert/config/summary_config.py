@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, no_type_check
 
 import polars as pl
+from pydantic import field_validator
 
 from ert.substitutions import substitute_runpath_name
 
@@ -13,17 +13,23 @@ from ._read_summary import read_summary
 from .ensemble_config import Refcase
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import (
+    InvalidResponseFile,
+    ResponseConfig,
+    ResponseMetadata,
+    ert_response,
+)
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@ert_response
 class SummaryConfig(ResponseConfig):
     name: str = "summary"
     refcase: set[datetime] | list[str] | None = None
     has_finalized_keys: bool = False
+    type: str = "summary"
 
     def __post_init__(self) -> None:
         if isinstance(self.refcase, list):
@@ -72,6 +78,10 @@ class SummaryConfig(ResponseConfig):
         df = df.explode("values", "time")
         df = df.sort(by=["time"])
         return df
+
+    @field_validator("refcase", mode="before")
+    def parse_refcase(cls, refcase: list[datetime] | list[str]) -> list[datetime]:
+        return [datetime.fromisoformat(d) if isinstance(d, str) else d for d in refcase]
 
     @property
     def response_type(self) -> str:

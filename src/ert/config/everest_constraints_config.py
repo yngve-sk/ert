@@ -1,5 +1,4 @@
 import os
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, cast
 
@@ -14,7 +13,6 @@ from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetada
 from .responses_index import responses_index
 
 
-@dataclass
 class EverestConstraintsConfig(ResponseConfig):
     @property
     def metadata(self) -> list[ResponseMetadata]:
@@ -29,6 +27,7 @@ class EverestConstraintsConfig(ResponseConfig):
 
     name: str = "everest_constraints"
     has_finalized_keys: bool = True
+    type: str = "everest_constraints"
 
     @property
     def expected_input_files(self) -> list[str]:

@@ -10,14 +10,14 @@ from typing import TYPE_CHECKING, Any, Self, cast, overload
 import networkx as nx
 import numpy as np
 import xarray as xr
-from pydantic.dataclasses import dataclass
+from pydantic import field_serializer
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterConfig, ParameterMetadata, ert_parameter
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -80,7 +80,7 @@ def adjust_graph_for_masking(
     return G
 
 
-@dataclass
+@ert_parameter
 class Field(ParameterConfig):
     nx: int
     ny: int
@@ -94,6 +94,15 @@ class Field(ParameterConfig):
     output_file: Path
     grid_file: str
     mask_file: Path | None = None
+    type: str = "field"
+
+    @field_serializer("output_file")
+    def serialize_output_file(self, path: Path):
+        return str(path)
+
+    @field_serializer("mask_file")
+    def serialize_mask_file(self, path: Path | None):
+        return str(path) if path is not None else "null"
 
     @property
     def parameter_keys(self) -> list[str]:

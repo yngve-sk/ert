@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, MutableMapping
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,7 +12,7 @@ import xarray as xr
 
 from ert.substitutions import substitute_runpath_name
 
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterConfig, ParameterMetadata, ert_parameter
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     MutableDataType = MutableMapping[str, Number | MutableMapping[str, Number]]
 
 
-@dataclass
+@ert_parameter
 class ExtParamConfig(ParameterConfig):
     """Create an ExtParamConfig for @key with the given @input_keys
 
@@ -46,6 +46,7 @@ class ExtParamConfig(ParameterConfig):
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False
+    type: str = "everest_parameter"
 
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int

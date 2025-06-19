@@ -202,6 +202,12 @@ class RunModel(BaseModel, ABC):
             eclbase=self._model_config.eclbase_format_string,
         )
 
+    #
+    #    @field_validator("substitutions", mode="before")
+    #    def serialize_substitutions(cls, substitutions: Substitutions) -> Any:
+    #        # This forces calling the actual instance dump with all fields
+    #        return dict(substitutions=substitutions)
+
     @property
     def api(self) -> RunModelAPI:
         return RunModelAPI(

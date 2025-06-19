@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-import dataclasses
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import networkx as nx
 import numpy as np
 import polars as pl
 import xarray as xr
 from pydantic import BaseModel
+
+from ert.config.dynamic_discriminated import (
+    WithDynamicDiscriminator,
+    make_registry_decorator,
+)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -38,11 +42,11 @@ class ParameterMetadata(BaseModel):
     userdata: dict[str, Any]
 
 
-@dataclasses.dataclass
-class ParameterConfig(ABC):
+class ParameterConfig(WithDynamicDiscriminator):
     name: str
     forward_init: bool
     update: bool
+    _registry: ClassVar[dict[str, type[ParameterConfig]]] = {}
 
     def sample_or_load(
         self,
@@ -137,12 +141,15 @@ class ParameterConfig(ABC):
         """
 
     def to_dict(self) -> dict[str, Any]:
-        data = dataclasses.asdict(self, dict_factory=CustomDict)
+        data = self.model_dump()
         data["_ert_kind"] = self.__class__.__name__
         return data
 
-    def save_experiment_data(  # noqa: B027
+    def save_experiment_data(
         self,
         experiment_path: Path,
     ) -> None:
         pass
+
+
+ert_parameter = make_registry_decorator(ParameterConfig)

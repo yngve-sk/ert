@@ -1,5 +1,4 @@
 import os
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Self, cast
 
@@ -13,10 +12,10 @@ from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetada
 from .responses_index import responses_index
 
 
-@dataclass
 class EverestObjectivesConfig(ResponseConfig):
     name: str = "everest_objectives"
     has_finalized_keys: bool = True
+    type: str = "everest_objectives"
 
     @property
     def metadata(self) -> list[ResponseMetadata]:

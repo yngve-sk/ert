@@ -3,7 +3,7 @@ from typing import Any
 
 import numpy as np
 import polars as pl
-from pydantic import PrivateAttr
+from pydantic import PrivateAttr, field_serializer
 
 from ert.config.design_matrix import DesignMatrix
 from ert.config.parameter_config import ParameterConfig
@@ -25,8 +25,21 @@ class InitialEnsembleRunModel(RunModel, ABC):
 
     def __init__(self, **data: Any) -> None:
         observations = data.pop("observations", None)
+        data["response_configuration"] = [
+            ResponseConfig.model_validate_subclass(o) if isinstance(o, dict) else o
+            for o in data["response_configuration"]
+        ]
+        data["parameter_configuration"] = [
+            ParameterConfig.model_validate_subclass(o) if isinstance(o, dict) else o
+            for o in data["parameter_configuration"]
+        ]
         super().__init__(**data)
         self._observations = observations
+
+    @field_serializer("parameter_configuration", "response_configuration")
+    def serialize_parameters(self, configs: Any, info) -> Any:
+        # This forces calling the actual instance dump with all fields
+        return [c.model_dump(mode="python") for c in configs]
 
     def _sample_and_evaluate_ensemble(
         self,
