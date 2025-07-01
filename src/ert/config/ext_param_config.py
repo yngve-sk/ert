@@ -46,7 +46,7 @@ class ExtParamConfig(ParameterConfig):
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False
-    type: str = "everest_parameter"
+    type: str = "everest_parameters"
 
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int

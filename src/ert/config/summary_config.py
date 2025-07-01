@@ -80,8 +80,14 @@ class SummaryConfig(ResponseConfig):
         return df
 
     @field_validator("refcase", mode="before")
-    def parse_refcase(cls, refcase: list[datetime] | list[str]) -> list[datetime]:
-        return [datetime.fromisoformat(d) if isinstance(d, str) else d for d in refcase]
+    def parse_refcase(
+        cls, refcase: list[datetime] | list[str] | None
+    ) -> list[datetime]:
+        return (
+            [datetime.fromisoformat(d) if isinstance(d, str) else d for d in refcase]
+            if refcase is not None
+            else refcase
+        )
 
     @property
     def response_type(self) -> str:
