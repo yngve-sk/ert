@@ -5,15 +5,17 @@ import logging
 import queue
 import threading
 from pathlib import Path
-from typing import Final
+from typing import ClassVar, Final
 
 from _ert.events import (
     DispatcherEvent,
+    ForwardModelStepBaseEvent,
     ForwardModelStepChecksum,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepStart,
     ForwardModelStepSuccess,
+    Id,
     dispatcher_event_to_json,
 )
 from _ert.forward_model_runner.client import Client, ClientConnectionError
@@ -35,6 +37,63 @@ logger = logging.getLogger(__name__)
 
 class EventSentinel:
     pass
+
+
+class EventBatcher:
+    _EVENT_ORDER: ClassVar = {
+        Id.FORWARD_MODEL_STEP_START: 0,
+        Id.FORWARD_MODEL_STEP_RUNNING: 1,
+        Id.FORWARD_MODEL_STEP_SUCCESS: 2,
+        Id.FORWARD_MODEL_STEP_FAILURE: 3,
+        Id.FORWARD_MODEL_STEP_CHECKSUM: 4,
+    }
+
+    def __init__(self) -> None:
+        self._batched_events: dict[tuple[str, str], ForwardModelStepBaseEvent] = {}
+        self._events_to_flush: set[tuple[str, str]] = set()
+        self._checksum_event: ForwardModelStepBaseEvent | None = None
+
+        self._is_stopped = False
+
+    @property
+    def is_stopped(self) -> bool:
+        return self._is_stopped
+
+    @property
+    def is_flushed(self) -> bool:
+        return not self._events_to_flush and self._checksum_event is None
+
+    def add_event(self, event: DispatcherEvent):
+        if isinstance(event, ForwardModelStepBaseEvent):
+            key = (event.fm_step, event.event_type)
+            existing = self._batched_events.get(key)
+            if existing and type(existing) is type(event):
+                self._batched_events[key] = existing.merge(event)
+            else:
+                self._batched_events[key] = event
+            self._events_to_flush.add(key)
+
+        elif isinstance(event, ForwardModelStepChecksum):
+            self._checksum_event = event
+
+    def flush_pending_events(self) -> list[DispatcherEvent]:
+        sorted_fm_keys = sorted(
+            self._events_to_flush,
+            key=lambda k: (k[0], self._EVENT_ORDER.get(k[1])),
+        )
+        fm_events = [self._batched_events[key] for key in sorted_fm_keys]
+
+        self._events_to_flush.clear()
+        events_to_flush = fm_events
+
+        if self._checksum_event is not None:
+            events_to_flush.append(self._checksum_event)
+            self._checksum_event = None
+
+        return events_to_flush
+
+    def stop(self) -> None:
+        self._is_stopped = True
 
 
 class Event(Reporter):
@@ -75,6 +134,8 @@ class Event(Reporter):
         self._ens_id = None
         self._real_id = None
         self._event_queue: queue.Queue[DispatcherEvent | EventSentinel] = queue.Queue()
+
+        self._event_batcher = EventBatcher()
         self._event_publisher_thread = ErtThread(
             target=self._event_publisher, should_raise=False
         )
@@ -92,38 +153,47 @@ class Event(Reporter):
     def stop(self, exited_event: Exited | None = None):
         if exited_event:
             self._statemachine.transition(exited_event)
-        self._event_queue.put(Event._sentinel)
+
+        self._event_batcher.stop()
         self._done.set()
         if self._event_publisher_thread.is_alive():
             self._event_publisher_thread.join()
 
     def _event_publisher(self):
         async def publisher():
+            start_time = None
+            flush_interval = 2
+
             async with Client(
                 url=self._evaluator_url,
                 token=self._token,
                 ack_timeout=self._ack_timeout,
             ) as client:
-                event = None
-                start_time = None
                 while True:
                     try:
                         if self._done.is_set() and start_time is None:
                             start_time = asyncio.get_event_loop().time()
-                        if event is None:
-                            event = self._event_queue.get()
-                            if event is self._sentinel:
-                                break
+
                         if (
                             start_time
                             and (asyncio.get_event_loop().time() - start_time)
                             > self._finished_event_timeout
                         ):
                             break
-                        await client.send(
-                            dispatcher_event_to_json(event), self._max_retries
-                        )
-                        event = None
+
+                        if (
+                            self._event_batcher.is_stopped
+                            and self._event_batcher.is_flushed
+                        ):
+                            break
+
+                        for event in self._event_batcher.flush_pending_events():
+                            await client.send(
+                                dispatcher_event_to_json(event), self._max_retries
+                            )
+
+                        await asyncio.sleep(flush_interval)
+
                     except asyncio.CancelledError:
                         return
                     except ClientConnectionError as exc:
@@ -140,7 +210,7 @@ class Event(Reporter):
 
     def _dump_event(self, event: DispatcherEvent):
         logger.debug(f'Schedule "{type(event)}" for delivery')
-        self._event_queue.put(event)
+        self._event_batcher.add_event(event)
 
     def _init_handler(self, msg: Init):
         self._ens_id = str(msg.ens_id)

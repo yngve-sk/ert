@@ -66,6 +66,11 @@ class ForwardModelStepBaseEvent(BaseEvent):
     real: str
     fm_step: str
 
+    def merge(self, other: BaseEvent) -> BaseEvent:
+        current = self.model_dump()
+        new = other.model_dump()
+        return other.__class__(current | new)
+
 
 class ForwardModelStepStart(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_START_TYPE = Id.FORWARD_MODEL_STEP_START
@@ -78,6 +83,18 @@ class ForwardModelStepRunning(ForwardModelStepBaseEvent):
     max_memory_usage: int | None = None
     current_memory_usage: int | None = None
     cpu_seconds: float = 0.0
+
+    def merge(self, other: BaseEvent) -> BaseEvent:
+        return ForwardModelStepRunning(
+            time=other.time,
+            ensemble=other.ensemble,
+            real=other.real,
+            fm_step=other.fm_step,
+            event_type=other.event_type,
+            max_memory_usage=max(self.max_memory_usage, other.max_memory_usage),
+            current_memory_usage=other.current_memory_usage,
+            cpu_seconds=other.cpu_seconds,
+        )
 
 
 class ForwardModelStepSuccess(ForwardModelStepBaseEvent):
