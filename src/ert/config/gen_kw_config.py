@@ -339,6 +339,20 @@ class GenKwConfig(ParameterConfig):
             .T.copy()
         )
 
+    def create_dataset(
+        self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
+    ) -> pl.DataFrame:
+        return pl.DataFrame(
+            {
+                "realization": iens_active_index,
+            }
+        ).with_columns(
+            [
+                pl.Series(data[i, :]).alias(param_name.name)
+                for i, param_name in enumerate(self.transform_functions)
+            ]
+        )
+
     def copy_parameters(
         self,
         source_ensemble: Ensemble,

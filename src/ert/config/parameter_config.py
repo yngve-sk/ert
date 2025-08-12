@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import numpy as np
+import polars as pl
 import xarray as xr
 from pydantic import BaseModel
 
@@ -83,6 +84,16 @@ class ParameterConfig(BaseModel):
         from the internal ert format to the format the forward model
         expects
         """
+
+    @abstractmethod
+    def create_dataset(
+        self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
+    ) -> xr.Dataset | pl.DataFrame:
+        """
+        Create an xarray Dataset or polars DataFrame from the data array
+        and the active index.
+        """
+        raise NotImplementedError("create_dataset must be implemented in subclasses")
 
     def copy_parameters(
         self,

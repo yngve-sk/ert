@@ -173,6 +173,19 @@ class SurfaceConfig(ParameterConfig):
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_ascii_file(file_path)
 
+    def create_dataset(
+        self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
+    ) -> xr.Dataset:
+        ds = xr.Dataset(
+            {
+                "values": (
+                    ["x", "y"],
+                    data.reshape(self.ncol, self.nrow).astype("float32"),
+                )
+            }
+        )
+        return ds
+
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:

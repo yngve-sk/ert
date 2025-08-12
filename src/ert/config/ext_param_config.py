@@ -76,6 +76,19 @@ class ExtParamConfig(ParameterConfig):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
+    def create_dataset(
+        self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
+    ) -> xr.Dataset:
+        return xr.Dataset(
+            {
+                "values": ("names", data),
+                "names": [
+                    x.split(f"{self.name}.")[1].replace(".", "\0")
+                    for x in self.parameter_keys
+                ],
+            }
+        )
+
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
