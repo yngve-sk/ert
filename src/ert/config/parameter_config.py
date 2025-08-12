@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import networkx as nx
 import numpy as np
@@ -38,11 +39,17 @@ class ParameterMetadata(BaseModel):
     userdata: dict[str, Any]
 
 
+class DataScope(StrEnum):
+    PER_REALIZATION = "realization_based"
+    PER_ENSEMBLE = "ensemble_based"
+
+
 class ParameterConfig(BaseModel):
     type: str
     name: str
     forward_init: bool
     update: bool
+    data_scope: ClassVar[DataScope] = DataScope.PER_REALIZATION
 
     @property
     @abstractmethod

@@ -19,7 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import GenKwConfig, ParameterConfig
+from ert.config import DataScope, GenKwConfig, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -569,7 +569,7 @@ class LocalEnsemble(BaseMode):
         if group not in self.experiment.parameter_configuration:
             raise KeyError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
-        if isinstance(config, GenKwConfig):
+        if config.data_scope == DataScope.PER_ENSEMBLE:
             df = self._load_parameters_lazy(group).collect()
             if realizations is not None:
                 if isinstance(realizations, int):
@@ -613,7 +613,7 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
         config_node = self.experiment.parameter_configuration[param_group]
-        if isinstance(config_node, GenKwConfig):
+        if config_node.data_scope == DataScope.PER_ENSEMBLE:
             self.save_parameters(
                 param_group,
                 None,

@@ -5,7 +5,16 @@ import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, cast, overload
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    Self,
+    cast,
+    overload,
+)
 
 import networkx as nx
 import numpy as np
@@ -30,7 +39,7 @@ from .distribution import (
     UnifSettings,
     get_distribution,
 )
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import DataScope, ParameterConfig, ParameterMetadata
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
@@ -92,6 +101,7 @@ class TransformFunction:
 
 
 class GenKwConfig(ParameterConfig):
+    data_scope: ClassVar[DataScope] = DataScope.PER_ENSEMBLE
     type: Literal["gen_kw"] = "gen_kw"
     transform_function_definitions: list[TransformFunctionDefinition]
 
