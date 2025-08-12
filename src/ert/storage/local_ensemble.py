@@ -569,7 +569,7 @@ class LocalEnsemble(BaseMode):
         if group not in self.experiment.parameter_configuration:
             raise KeyError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
-        if config.data_scope == DataScope.PER_ENSEMBLE:
+        if isinstance(config, GenKwConfig):
             df = self._load_parameters_lazy(group).collect()
             if realizations is not None:
                 if isinstance(realizations, int):
