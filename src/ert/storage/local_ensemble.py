@@ -19,12 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import (
-    Field,
-    GenKwConfig,
-    ParameterConfig,
-    SurfaceConfig,
-)
+from ert.config import Field, GenKwConfig, ParameterConfig, SurfaceConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -638,7 +633,7 @@ class LocalEnsemble(BaseMode):
                     fill_value=np.nan,
                 )
                 ma[~ma.mask] = parameters[:, i]
-                ma = ma.reshape(self.mask.shape)  # type: ignore
+                ma = ma.reshape(config_node.mask.shape)  # type: ignore
                 ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
                 self.save_parameters(config_node.name, realization, ds)
         elif isinstance(config_node, SurfaceConfig):
