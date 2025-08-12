@@ -329,27 +329,6 @@ class GenKwConfig(ParameterConfig):
         else:
             return {self.name: data}
 
-    def save_parameters(
-        self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        parameter_dict = {
-            parameter.name: data[idx]
-            for idx, parameter in enumerate(self.transform_functions)
-        }
-        parameter_dict["realization"] = realization
-        ensemble.save_parameters(
-            self.name,
-            realization=None,
-            dataset=pl.DataFrame(
-                parameter_dict,
-                schema={tf.name: pl.Float64 for tf in self.transform_functions}
-                | {"realization": pl.Int64},
-            ),
-        )
-
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:

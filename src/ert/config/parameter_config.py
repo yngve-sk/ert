@@ -84,17 +84,6 @@ class ParameterConfig(BaseModel):
         expects
         """
 
-    @abstractmethod
-    def save_parameters(
-        self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        """
-        Save the parameter in internal storage for the given ensemble
-        """
-
     def copy_parameters(
         self,
         source_ensemble: Ensemble,

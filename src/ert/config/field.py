@@ -261,22 +261,6 @@ class Field(ParameterConfig):
             self.file_format,
         )
 
-    def save_parameters(
-        self,
-        ensemble: Ensemble,
-        realization: int,
-        data: npt.NDArray[np.float64],
-    ) -> None:
-        ma = np.ma.MaskedArray(  # type: ignore
-            data=np.zeros(self.mask.size),
-            mask=self.mask,
-            fill_value=np.nan,
-        )
-        ma[~ma.mask] = data
-        ma = ma.reshape(self.mask.shape)  # type: ignore
-        ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
-        ensemble.save_parameters(self.name, realization, ds)
-
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:

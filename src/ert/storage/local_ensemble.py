@@ -19,7 +19,12 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import GenKwConfig, ParameterConfig
+from ert.config import (
+    Field,
+    GenKwConfig,
+    ParameterConfig,
+    SurfaceConfig,
+)
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -625,9 +630,47 @@ class LocalEnsemble(BaseMode):
                 ]
             )
             self.save_parameters(param_group, None, df)
-        else:
+        elif isinstance(config_node, Field):
             for i, realization in enumerate(iens_active_index):
-                config_node.save_parameters(self, int(realization), parameters[:, i])
+                ma = np.ma.MaskedArray(  # type: ignore
+                    data=np.zeros(config_node.mask.size),
+                    mask=config_node.mask,
+                    fill_value=np.nan,
+                )
+                ma[~ma.mask] = parameters[:, i]
+                ma = ma.reshape(self.mask.shape)  # type: ignore
+                ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
+                self.save_parameters(config_node.name, realization, ds)
+        elif isinstance(config_node, SurfaceConfig):
+            for i, realization in enumerate(iens_active_index):
+                ds = xr.Dataset(
+                    {
+                        "values": (
+                            ["x", "y"],
+                            parameters[:, i]
+                            .reshape(config_node.ncol, config_node.nrow)
+                            .astype("float32"),
+                        )
+                    }
+                )
+                self.save_parameters(config_node.name, realization, ds)
+        else:  # Assume it is ExtParamConfig
+            for i, realization in enumerate(iens_active_index):
+                data = parameters[:, i]
+                assert len(data) == len(config_node.parameter_keys)
+                self.save_parameters(
+                    config_node.name,
+                    realization,
+                    xr.Dataset(
+                        {
+                            "values": ("names", data),
+                            "names": [
+                                x.split(f"{self.name}.")[1].replace(".", "\0")
+                                for x in config_node.parameter_keys
+                            ],
+                        }
+                    ),
+                )
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
