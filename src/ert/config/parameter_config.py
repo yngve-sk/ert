@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from enum import StrEnum
+from collections.abc import Generator
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import networkx as nx
 import numpy as np
@@ -39,17 +39,11 @@ class ParameterMetadata(BaseModel):
     userdata: dict[str, Any]
 
 
-class DataScope(StrEnum):
-    PER_REALIZATION = "realization_based"
-    PER_ENSEMBLE = "ensemble_based"
-
-
 class ParameterConfig(BaseModel):
     type: str
     name: str
     forward_init: bool
     update: bool
-    data_scope: ClassVar[DataScope] = DataScope.PER_REALIZATION
 
     @property
     @abstractmethod
@@ -95,7 +89,11 @@ class ParameterConfig(BaseModel):
     @abstractmethod
     def create_dataset(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
-    ) -> xr.Dataset | pl.DataFrame:
+    ) -> (
+        Generator[tuple[str, int | None, xr.Dataset]]
+        | Generator[tuple[str, int | None, pl.Dataset]]
+        | None
+    ):
         """
         Create an xarray Dataset or polars DataFrame from the data array
         and the active index.

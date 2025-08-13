@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import math
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
-    ClassVar,
     Literal,
     Self,
     cast,
@@ -39,7 +38,7 @@ from .distribution import (
     UnifSettings,
     get_distribution,
 )
-from .parameter_config import DataScope, ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterConfig, ParameterMetadata
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 if TYPE_CHECKING:
@@ -101,7 +100,6 @@ class TransformFunction:
 
 
 class GenKwConfig(ParameterConfig):
-    data_scope: ClassVar[DataScope] = DataScope.PER_ENSEMBLE
     type: Literal["gen_kw"] = "gen_kw"
     transform_function_definitions: list[TransformFunctionDefinition]
 
@@ -351,16 +349,20 @@ class GenKwConfig(ParameterConfig):
 
     def create_dataset(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
-    ) -> pl.DataFrame:
-        return pl.DataFrame(
-            {
-                "realization": iens_active_index,
-            }
-        ).with_columns(
-            [
-                pl.Series(data[i, :]).alias(param_name.name)
-                for i, param_name in enumerate(self.transform_functions)
-            ]
+    ) -> Generator[tuple[str, int | None, pl.Dataset]]:
+        yield (
+            None,
+            None,
+            pl.DataFrame(
+                {
+                    "realization": iens_active_index,
+                }
+            ).with_columns(
+                [
+                    pl.Series(data[i, :]).alias(param_name.name)
+                    for i, param_name in enumerate(self.transform_functions)
+                ]
+            ),
         )
 
     def copy_parameters(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Self, cast
 
@@ -175,16 +176,17 @@ class SurfaceConfig(ParameterConfig):
 
     def create_dataset(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
-    ) -> xr.Dataset:
-        ds = xr.Dataset(
-            {
-                "values": (
-                    ["x", "y"],
-                    data.reshape(self.ncol, self.nrow).astype("float32"),
-                )
-            }
-        )
-        return ds
+    ) -> Generator[tuple[str, int | None, xr.Dataset]]:
+        for i, realization in enumerate(iens_active_index):
+            ds = xr.Dataset(
+                {
+                    "values": (
+                        ["x", "y"],
+                        data[:, i].reshape(self.ncol, self.nrow).astype("float32"),
+                    )
+                }
+            )
+            yield self.name, realization, ds
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]

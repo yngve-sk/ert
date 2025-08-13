@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import logging
 import os
+from collections.abc import Generator
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
@@ -263,16 +264,17 @@ class Field(ParameterConfig):
 
     def create_dataset(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
-    ) -> xr.Dataset:
-        ma = np.ma.MaskedArray(  # type: ignore
-            data=np.zeros(self.mask.size),
-            mask=self.mask,
-            fill_value=np.nan,
-        )
-        ma[~ma.mask] = data
-        ma = ma.reshape(self.mask.shape)  # type: ignore
-        ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
-        return ds
+    ) -> Generator[tuple[str, int | None, xr.Dataset]]:
+        for i, realization in enumerate(iens_active_index):
+            ma = np.ma.MaskedArray(  # type: ignore
+                data=np.zeros(self.mask.size),
+                mask=self.mask,
+                fill_value=np.nan,
+            )
+            ma[~ma.mask] = data[:, i]
+            ma = ma.reshape(self.mask.shape)  # type: ignore
+            ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
+            yield self.name, realization, ds
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]

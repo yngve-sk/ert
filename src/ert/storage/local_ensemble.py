@@ -19,7 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import DataScope, GenKwConfig, ParameterConfig
+from ert.config import GenKwConfig, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
 from ert.storage.load_status import LoadResult, LoadStatus
 from ert.storage.mode import BaseMode, Mode, require_write
@@ -613,19 +613,14 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
         config_node = self.experiment.parameter_configuration[param_group]
-        if config_node.data_scope == DataScope.PER_ENSEMBLE:
+        for group, real, ds in config_node.create_dataset(
+            parameters, iens_active_index
+        ):
             self.save_parameters(
-                param_group,
-                None,
-                config_node.create_dataset(parameters, iens_active_index),
+                group or param_group,
+                real,
+                ds,
             )
-        else:
-            for i, realization in enumerate(iens_active_index):
-                self.save_parameters(
-                    config_node.name,
-                    realization,
-                    config_node.create_dataset(parameters[:, i], iens_active_index),
-                )
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None

@@ -79,14 +79,18 @@ class ExtParamConfig(ParameterConfig):
     def create_dataset(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
     ) -> xr.Dataset:
-        return xr.Dataset(
-            {
-                "values": ("names", data),
-                "names": [
-                    x.split(f"{self.name}.")[1].replace(".", "\0")
-                    for x in self.parameter_keys
-                ],
-            }
+        yield (
+            self.name,
+            iens_active_index[0],
+            xr.Dataset(
+                {
+                    "values": ("names", data),
+                    "names": [
+                        x.split(f"{self.name}.")[1].replace(".", "\0")
+                        for x in self.parameter_keys
+                    ],
+                }
+            ),
         )
 
     def load_parameters(

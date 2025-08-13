@@ -510,7 +510,7 @@ class EverestRunModel(RunModel):
 
                 # Save controls to ensemble
                 ensemble.save_parameters_numpy(
-                    sim_controls[offset : (offset + n_param_keys)].reshape(-1, 1),
+                    sim_controls[offset : (offset + n_param_keys)],
                     ext_param_config.name,
                     np.array([sim_id]),
                 )
