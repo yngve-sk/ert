@@ -613,7 +613,7 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
         config_node = self.experiment.parameter_configuration[param_group]
-        for group, real, ds in config_node.create_dataset(
+        for group, real, ds in config_node.create_datasets_for_storage(
             parameters, iens_active_index
         ):
             self.save_parameters(

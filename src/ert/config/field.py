@@ -262,7 +262,7 @@ class Field(ParameterConfig):
             self.file_format,
         )
 
-    def create_dataset(
+    def create_datasets_for_storage(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
     ) -> Generator[tuple[str, int | None, xr.Dataset]]:
         for i, realization in enumerate(iens_active_index):

@@ -174,7 +174,7 @@ class SurfaceConfig(ParameterConfig):
         file_path.parent.mkdir(exist_ok=True, parents=True)
         surf.to_ascii_file(file_path)
 
-    def create_dataset(
+    def create_datasets_for_storage(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
     ) -> Generator[tuple[str, int | None, xr.Dataset]]:
         for i, realization in enumerate(iens_active_index):

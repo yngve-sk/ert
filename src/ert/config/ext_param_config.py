@@ -76,7 +76,7 @@ class ExtParamConfig(ParameterConfig):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
-    def create_dataset(
+    def create_datasets_for_storage(
         self, data: npt.NDArray[np.float64], iens_active_index: npt.NDArray[np.int_]
     ) -> xr.Dataset:
         yield (
