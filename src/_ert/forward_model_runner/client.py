@@ -121,8 +121,10 @@ class Client:
                         )
                     last_heartbeat_time = asyncio.get_running_loop().time()
                 elif raw_msg == TERMINATE_MSG:
+                    logger.debug("Received TERMINATE")
                     self.received_terminate_message.set()
                 else:
+                    logger.debug("Received unknown message")
                     await self.process_message(raw_msg.decode("utf-8"))
             except zmq.ZMQError as exc:
                 logger.debug(
@@ -143,6 +145,7 @@ class Client:
             retries = self.DEFAULT_MAX_RETRIES
         while retries >= 0:
             try:
+                logger.debug(f"Publishing message: {message}")
                 await self.socket.send_multipart([b"", message])
                 try:
                     await asyncio.wait_for(
