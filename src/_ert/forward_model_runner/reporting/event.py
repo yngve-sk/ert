@@ -113,6 +113,7 @@ class Event(Reporter):
             self._event_publisher_thread.join()
 
     async def handle_publish(self, client: Client) -> None:
+        logger.debug("handle_publish")
         event = None
         start_time = None
         while True:
