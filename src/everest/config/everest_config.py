@@ -845,9 +845,14 @@ to read summary data from forward model, do:
         }
         activate_script = ErtPluginManager().activate_script()
         if has_site_config:
+            print("has site config!")
             context["queue_system"] = QueueConfig.from_dict(site_config).queue_options
         if activate_script:
+            print("has activate script!")
             context["activate_script"] = activate_script
+
+        if "queue_system" in context:
+            print(context["queue_system"].model_dump())
         with init_context(context):
             return cls(**config_dict)
 

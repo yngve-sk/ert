@@ -114,6 +114,8 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
             options = None
             if info.context:
                 options = info.context.get("queue_system")
+                print("Trying to use options from info.context")
+                print(options)
             return options or LocalQueueOptions(max_running=8)
         return v
 
