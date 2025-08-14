@@ -121,23 +121,29 @@ class Event(Reporter):
                     start_time = asyncio.get_event_loop().time()
                 if event is None:
                     event = self._event_queue.get(timeout=0.1)
+                    logger.debug(f"Publishing event: {event}")
                     if event is self._sentinel:
+                        logger.debug("Sentinel, stopping")
                         break
                 if (
                     start_time
                     and (asyncio.get_event_loop().time() - start_time)
                     > self._finished_event_timeout
                 ):
+                    logger.debug("> self._finished_event_timeout")
                     break
                 assert isinstance(event, DispatcherEvent)
+                logger.debug(f"Sending event: {dispatcher_event_to_json(event)}")
                 await client.send(dispatcher_event_to_json(event), self._max_retries)
                 event = None
             except asyncio.CancelledError:
+                logger.debug("except asyncio.CancelledError:")
                 return
             except ClientConnectionError as exc:
                 logger.error(f"Failed to send event: {exc}")
                 return
             except queue.Empty:
+                logger.debug("except queue.Empty")
                 await asyncio.sleep(0)
 
     async def listen_for_terminate_message(self, client: Client) -> None:
