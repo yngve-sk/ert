@@ -123,6 +123,7 @@ class EnsembleEvaluator:
         heartbeat_interval = 0.1
         closetracker_received: bool = False
         while True:
+            logger.debug("_publisher!!!")
             try:
                 event = await asyncio.wait_for(
                     self._events_to_send.get(), timeout=heartbeat_interval
