@@ -105,12 +105,15 @@ class Event(Reporter):
             self._finished_event_timeout = 600
 
     def stop(self, exited_event: Exited | None = None) -> None:
+        logger.debug("STOP!")
         if exited_event:
             self._statemachine.transition(exited_event)
         self._event_queue.put(Event._sentinel)
         self._done.set()
         if self._event_publisher_thread.is_alive():
+            logger.debug("publisher is alive, joining")
             self._event_publisher_thread.join()
+            logger.debug("publisher is DONE!")
 
     async def handle_publish(self, client: Client) -> None:
         logger.debug("handle_publish")
