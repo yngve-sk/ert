@@ -10,6 +10,7 @@ from json.decoder import JSONDecodeError
 from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import quote
 
+import debugpy
 import httpx
 import numpy as np
 import numpy.typing as npt
@@ -139,6 +140,8 @@ class PlotApi:
     @cached_property
     def responses_api_key_defs(self) -> list[PlotApiKeyDefinition]:
         key_defs: dict[str, PlotApiKeyDefinition] = {}
+
+        debugpy.listen(("0.0.0.0", 5678))
 
         with StorageService.session(project=self.ens_path) as client:
             response = client.get("/experiments", timeout=self._timeout)
