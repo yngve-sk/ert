@@ -8,7 +8,6 @@ import pytest
 from lark import Token
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
-from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.run_models._create_run_path import create_run_path
 from ert.runpaths import Runpaths
@@ -763,7 +762,7 @@ def test_validation_derrf_distribution(
 
 def test_genkw_paramgraph_transformfn_node_correspondence():
     config = GenKwConfig(
-        name=f"param",
+        name="param",
         group="COEFFS",
         distribution={"name": "uniform", "min": 1, "max": 2},
     )

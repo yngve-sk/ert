@@ -85,6 +85,8 @@ class GenKwConfig(ParameterConfig):
     update: bool = True
     group: str = "DEFAULT"
     input_source: DataSource = DataSource.SAMPLED
+    dataset_storage_cardinality: Literal["one_per_ensemble"] = "one_per_ensemble"
+    config_cardinality: Literal["one_config_one_param"] = "one_config_one_param"
 
     def __contains__(self, item: str) -> bool:
         return item == self.name

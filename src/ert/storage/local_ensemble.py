@@ -595,23 +595,38 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        if group in self.experiment.scalar_groups:
-            return self._load_scalar_keys(
-                self.experiment.scalar_groups[group], realizations, transformed
-            )
-        elif group not in self.experiment.parameter_configuration:
+        configs = [
+            cfg
+            for param_key, cfg in self.experiment.parameter_configuration.items()
+            if group in {cfg.group, cfg.name}
+        ]
+
+        if not configs:
             raise KeyError(f"{group} is not registered to the experiment.")
-        if group in self.experiment.scalar_nodes:
-            return self._load_scalar_keys([group], realizations, transformed)
-        ds = self._load_dataset(
-            group,
-            (
-                realizations
-                if realizations is not None
-                else np.flatnonzero(self.get_realization_mask_with_parameters())
-            ),
-        )
-        return ds
+
+        match configs[0]:
+            case ParameterConfig(
+                dataset_storage_cardinality="one_per_ensemble",
+                config_cardinality="one_config_one_param",
+            ):
+                return self._load_scalar_keys(
+                    [config.name for config in configs], realizations, transformed
+                )
+            case ParameterConfig(
+                dataset_storage_cardinality="one_per_realization",
+                config_cardinality="one_config_multiple_params",
+            ):
+                ds = self._load_dataset(
+                    group,
+                    (
+                        realizations
+                        if realizations is not None
+                        else np.flatnonzero(self.get_realization_mask_with_parameters())
+                    ),
+                )
+                return ds
+            case _:
+                raise KeyError("Unsupported format")
 
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]

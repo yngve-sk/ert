@@ -44,6 +44,8 @@ class ParameterConfig(BaseModel):
     name: str
     forward_init: bool
     update: bool
+    dataset_storage_cardinality: Literal["one_per_ensemble", "one_per_realization"]
+    config_cardinality: Literal["one_config_one_param", "one_config_multiple_params"]
 
     @property
     @abstractmethod

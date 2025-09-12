@@ -95,6 +95,10 @@ class Field(ParameterConfig):
     output_file: Path
     grid_file: str
     mask_file: Path | None = None
+    dataset_storage_cardinality: Literal["one_per_realization"] = "one_per_realization"
+    config_cardinality: Literal["one_config_multiple_params"] = (
+        "one_config_multiple_params"
+    )
 
     @field_serializer("output_file")
     def serialize_output_file(self, path: Path) -> str:

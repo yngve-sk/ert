@@ -46,6 +46,10 @@ class ExtParamConfig(ParameterConfig):
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False
+    dataset_storage_cardinality: Literal["one_per_realization"] = "one_per_realization"
+    config_cardinality: Literal["one_config_multiple_params"] = (
+        "one_config_multiple_params"
+    )
 
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int
