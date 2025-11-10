@@ -34,8 +34,8 @@ class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
             """
         ),
     )
-    scale: PositiveFloat | None = Field(
-        default=None,
+    scale: PositiveFloat = Field(
+        default=1.0,
         description=dedent(
             """
             Optional scaling of the objective function value.

@@ -553,10 +553,7 @@ class EverestStorage:
                 "objective_name": [objective.name for objective in objective_functions],
                 "weight": pl.Series(weights / sum(weights), dtype=pl.Float64),
                 "scale": pl.Series(
-                    [
-                        1.0 if obj.scale is None else obj.scale
-                        for obj in objective_functions
-                    ],
+                    [obj.scale for obj in objective_functions],
                     dtype=pl.Float64,
                 ),
             }

@@ -461,10 +461,7 @@ def get_optimization_domain_transforms(
 
     objective_scaler = ObjectiveScaler(
         auto_scale=auto_scale,
-        scales=[
-            1.0 if objective.scale is None else objective.scale
-            for objective in objectives
-        ],
+        scales=[objective.scale for objective in objectives],
         realization_weights=realization_weights,
         objective_weights=[
             1.0 if objective.weight is None else objective.weight
