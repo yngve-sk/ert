@@ -20,7 +20,7 @@ from ert.storage import Ensemble
 
 from ._update_commons import (
     ErtAnalysisError,
-    _all_parameters,
+    _all_numeric_parameters,
     _copy_unupdated_parameters,
     _preprocess_observations_and_responses,
     noop_progress_callback,
@@ -146,7 +146,7 @@ def analysis_EnIF(
     start_enif = time.time()
 
     # Load all parameters at once
-    X_full = _all_parameters(
+    X_full = _all_numeric_parameters(
         ensemble=source_ensemble,
         iens_active_index=iens_active_index,
     )

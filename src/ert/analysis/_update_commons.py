@@ -334,11 +334,11 @@ class _OutlierColumns(StrEnum):
     scaled_std = "scaled_obs_error"
 
 
-def _all_parameters(
+def _all_numeric_parameters(
     ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
 ) -> npt.NDArray[np.float64]:
-    """Return all parameters in assimilation problem"""
+    """Return all numeric parameters in assimilation problem"""
 
     parameter_datatypes = ensemble.parameter_datatypes
 
