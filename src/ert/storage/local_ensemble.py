@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 from uuid import UUID
 
 import numpy as np
@@ -539,6 +539,23 @@ class LocalEnsemble(BaseMode):
 
         datasets = [self._load_single_dataset(group, int(i)) for i in realizations]
         return xr.combine_nested(datasets, concat_dim="realizations")
+
+    @property
+    def parameter_datatypes(self) -> dict[str, Literal["number", "categorical"]]:
+        d: dict[str, Literal["number", "categorical"]] = {
+            k: "number" for k, p in self.experiment.parameter_configuration.items()
+        }
+
+        try:
+            scalars_df = self._load_parameters_lazy("SCALARS")
+        except KeyError:
+            return d
+
+        return {
+            name: "categorical"
+            for name, dt in scalars_df.schema.items()
+            if dt == pl.Utf8
+        }
 
     def _load_parameters_lazy(
         self,

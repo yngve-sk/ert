@@ -49,15 +49,17 @@ def test_that_enif_update_does_not_update_design_matrix_parameters(
 
     with open_storage(enif_without_dm.storage_path, mode="r") as storage:
         previous_experiment = storage.get_experiment_by_name("enif_without_dm")
-        previous_ensemble = next(iter(previous_experiment.ensembles))
-        correct_a_values = previous_ensemble.load_parameters("a")
+        posterior_ensemble = next(
+            e for e in previous_experiment.ensembles if e.iteration == 1
+        )
+        posterior_a_values = posterior_ensemble.load_parameters("a")
 
         _create_design_matrix(
             "poly_design.xlsx",
             pl.DataFrame(
                 {
                     "REAL": list(range(num_realizations)),
-                    "a": correct_a_values["a"].to_list(),
+                    "a": posterior_a_values["a"].to_list(),
                 }
             ),
         )

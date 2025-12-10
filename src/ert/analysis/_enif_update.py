@@ -42,7 +42,7 @@ def enif_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
     observations: Iterable[str],
-    parameters: Iterable[str],
+    parameters: Iterable[str],  # Parameters to UPDATE
     random_seed: int,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
 ) -> SmootherSnapshot:
@@ -161,9 +161,23 @@ def analysis_EnIF(
         verbose_level=5,
     )
 
+    parameter_datatypes = source_ensemble.parameter_datatypes
+
+    # EnIF considers ALL parameters
+    # (including ones that are set to not be updated)
+    # when creating the H-matrix,
+    # which is a mapping between parameters and responses.
+    # At time of writing, we do not have an established way of mapping
+    # categoricals to numbers so that they can be a part of the H-matrix.
+    all_numeric_parameters = [
+        parameter_key
+        for parameter_key, datatype in parameter_datatypes.items()
+        if datatype == "number"
+    ]
+
     # Learn the precision matrix block-sparse over parameter groups
     Prec_u = sp.sparse.csc_matrix((0, 0), dtype=float)
-    for param_group in parameters:
+    for param_group in all_numeric_parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
         X_local = source_ensemble.load_parameters_numpy(param_group, iens_active_index)
         X_local_scaler = StandardScaler()
@@ -214,6 +228,12 @@ def analysis_EnIF(
     X_full = X_full_scaler.inverse_transform(X_full).T
 
     # Iterate over parameters to store the updated ensemble
+    # Now we update only the parameters that are set to be update
+    # In practice, if a parameter is here updated by EnIF and exists
+    # in X_full, but is set to NOT be updated here, we simply omit
+    # write the updated value to the posterior. I.e., we just keep
+    # the old unupdated value, even though the parameter was a part of
+    # the update.
     parameters_updated = 0
     for param_group in parameters:
         log_msg = f"Storing data for {param_group}.."
